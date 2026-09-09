@@ -1,0 +1,36 @@
+name: unofficial-farma-client
+
+services:
+  librechat:
+    image: ghcr.io/danny-avila/librechat-dev:latest
+    container_name: unofficial-farma-librechat
+    hostname: unofficial-farma-librechat
+    restart: always
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3080"
+      MONGO_URI: mongodb://unofficial-farma-librechat-db:27017/LibreChat
+      SEARCH: "false"
+      ALLOW_REGISTRATION: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3080:3080"
+    volumes:
+      - ./librechat.yaml:/app/librechat.yaml
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:8.0.20
+    container_name: unofficial-farma-librechat-db
+    hostname: unofficial-farma-librechat-db
+    restart: always
+    command: mongod --noauth
+    volumes:
+      - mongodata:/data/db
+
+volumes:
+  mongodata:

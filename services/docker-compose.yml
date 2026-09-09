@@ -1,0 +1,76 @@
+name: unofficial-farma
+
+services:
+  db:
+    image: postgres:16
+    container_name: unofficial-farma-db
+    hostname: unofficial-farma-db
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      retries: 10
+
+  company:
+    build: .
+    container_name: unofficial-farma-company-service
+    hostname: unofficial-farma-company-service
+    command: python /app/__main__.py
+    restart: always
+    environment:
+      DATABASE_URL: postgresql+psycopg://app:app@unofficial-farma-db:5432/app
+      PYTHONDONTWRITEBYTECODE: "1"
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./company:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  product:
+    build: .
+    container_name: unofficial-farma-product-service
+    hostname: unofficial-farma-product-service
+    command: python /app/__main__.py
+    restart: always
+    environment:
+      DATABASE_URL: postgresql+psycopg://app:app@unofficial-farma-db:5432/app
+      PYTHONDONTWRITEBYTECODE: "1"
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./product:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      company:
+        condition: service_started
+
+  comment:
+    build: .
+    container_name: unofficial-farma-comment-service
+    hostname: unofficial-farma-comment-service
+    command: python /app/__main__.py
+    restart: always
+    environment:
+      DATABASE_URL: postgresql+psycopg://app:app@unofficial-farma-db:5432/app
+      PYTHONDONTWRITEBYTECODE: "1"
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./comment:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

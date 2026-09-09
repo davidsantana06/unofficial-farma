@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 import httpx
 
 from database import get_session
 from models import Product
-from schemas import ProductCreate, ProductUpdate
+from schemas import ProductCreate, ProductSearch, ProductUpdate
 
 router = APIRouter()
 
@@ -36,6 +36,29 @@ def list_products(
     session: Session = Depends(get_session),
 ):
     return session.exec(select(Product).offset(offset).limit(limit)).all()
+
+
+@router.get("/products/search", response_model=list[Product])
+def search_products(
+    filters: ProductSearch = Depends(),
+    limit: int = 50,
+    offset: int = 0,
+    session: Session = Depends(get_session),
+):
+    statement = select(Product)
+    if filters.company_id is not None:
+        statement = statement.where(Product.company_id == filters.company_id)
+    if filters.name is not None:
+        statement = statement.where(col(Product.name).ilike(f"%{filters.name}%"))
+    if filters.description is not None:
+        statement = statement.where(
+            col(Product.description).ilike(f"%{filters.description}%")
+        )
+    if filters.price is not None:
+        statement = statement.where(Product.price == filters.price)
+    if filters.dosage is not None:
+        statement = statement.where(col(Product.dosage).ilike(f"%{filters.dosage}%"))
+    return session.exec(statement.offset(offset).limit(limit)).all()
 
 
 @router.get("/products/{product_id}", response_model=Product)

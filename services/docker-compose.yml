@@ -1,4 +1,4 @@
-name: unofficial-farma
+name: unofficial-farma-services
 
 services:
   db:
@@ -14,6 +14,8 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - unofficial-farma-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d app"]
       interval: 5s
@@ -32,6 +34,8 @@ services:
       - "8001:8001"
     volumes:
       - ./company:/app
+    networks:
+      - unofficial-farma-network
     depends_on:
       db:
         condition: service_healthy
@@ -49,6 +53,8 @@ services:
       - "8002:8002"
     volumes:
       - ./product:/app
+    networks:
+      - unofficial-farma-network
     depends_on:
       db:
         condition: service_healthy
@@ -68,9 +74,16 @@ services:
       - "8003:8003"
     volumes:
       - ./comment:/app
+    networks:
+      - unofficial-farma-network
     depends_on:
       db:
         condition: service_healthy
+
+networks:
+  unofficial-farma-network:
+    name: unofficial-farma-network
+    driver: bridge
 
 volumes:
   pgdata:

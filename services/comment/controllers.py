@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from database import get_session
 from models import Comment
-from schemas import CommentCreate, CommentUpdate
+from schemas import CommentCreate, CommentSearch, CommentUpdate
 
 router = APIRouter()
 
@@ -30,6 +30,29 @@ def list_comments(
     session: Session = Depends(get_session),
 ):
     return session.exec(select(Comment).offset(offset).limit(limit)).all()
+
+
+@router.get("/comments/search", response_model=list[Comment])
+def search_comments(
+    filters: CommentSearch = Depends(),
+    limit: int = 50,
+    offset: int = 0,
+    session: Session = Depends(get_session),
+):
+    statement = select(Comment)
+    if filters.product_id is not None:
+        statement = statement.where(Comment.product_id == filters.product_id)
+    if filters.author_name is not None:
+        statement = statement.where(
+            col(Comment.author_name).ilike(f"%{filters.author_name}%")
+        )
+    if filters.author_email is not None:
+        statement = statement.where(
+            col(Comment.author_email).ilike(f"%{filters.author_email}%")
+        )
+    if filters.content is not None:
+        statement = statement.where(col(Comment.content).ilike(f"%{filters.content}%"))
+    return session.exec(statement.offset(offset).limit(limit)).all()
 
 
 @router.get("/comments/{comment_id}", response_model=Comment)

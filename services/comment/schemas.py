@@ -18,3 +18,10 @@ class CommentUpdate(SQLModel):
     author_name: Optional[str] = None
     author_email: Optional[str] = None
     content: Optional[str] = None
+
+
+class CommentSearch(SQLModel):
+    product_id: Optional[int] = None
+    author_name: Optional[str] = None
+    author_email: Optional[str] = None
+    content: Optional[str] = None

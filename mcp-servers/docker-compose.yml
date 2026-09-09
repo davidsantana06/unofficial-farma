@@ -1,0 +1,52 @@
+name: unofficial-farma-mcp-servers
+
+services:
+  company:
+    build: .
+    container_name: unofficial-farma-company-mcp
+    hostname: unofficial-farma-company-mcp
+    command: python /app/__main__.py
+    restart: always
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    ports:
+      - "9001:9001"
+    volumes:
+      - ./company:/app
+    networks:
+      - unofficial-farma-network
+
+  product:
+    build: .
+    container_name: unofficial-farma-product-mcp
+    hostname: unofficial-farma-product-mcp
+    command: python /app/__main__.py
+    restart: always
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    ports:
+      - "9002:9001"
+    volumes:
+      - ./product:/app
+    networks:
+      - unofficial-farma-network
+
+  comment:
+    build: .
+    container_name: unofficial-farma-comment-mcp
+    hostname: unofficial-farma-comment-mcp
+    command: python /app/__main__.py
+    restart: always
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    ports:
+      - "9003:9001"
+    volumes:
+      - ./comment:/app
+    networks:
+      - unofficial-farma-network
+
+networks:
+  unofficial-farma-network:
+    name: unofficial-farma-network
+    external: true

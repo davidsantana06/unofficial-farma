@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from database import get_session
 from models import Company
-from schemas import CompanyCreate, CompanyUpdate
+from schemas import CompanyCreate, CompanySearch, CompanyUpdate
 
 router = APIRouter()
 
@@ -30,6 +30,19 @@ def list_companies(
     session: Session = Depends(get_session),
 ):
     return session.exec(select(Company).offset(offset).limit(limit)).all()
+
+
+@router.get("/companies/search", response_model=list[Company])
+def search_companies(
+    filters: CompanySearch = Depends(),
+    limit: int = 50,
+    offset: int = 0,
+    session: Session = Depends(get_session),
+):
+    statement = select(Company)
+    if filters.name is not None:
+        statement = statement.where(col(Company.name).ilike(f"%{filters.name}%"))
+    return session.exec(statement.offset(offset).limit(limit)).all()
 
 
 @router.get("/companies/{company_id}", response_model=Company)

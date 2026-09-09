@@ -12,3 +12,7 @@ class CompanyCreate(CompanyBase):
 
 class CompanyUpdate(SQLModel):
     name: Optional[str] = None
+
+
+class CompanySearch(SQLModel):
+    name: Optional[str] = None

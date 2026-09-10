@@ -14,6 +14,7 @@ services:
       MONGO_URI: mongodb://unofficial-farma-librechat-db:27017/LibreChat
       SEARCH: "false"
       ALLOW_REGISTRATION: "true"
+      SCHEDULES_SINGLE_PROCESS: "true"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

@@ -25,7 +25,7 @@ services:
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
     ports:
-      - "9002:9001"
+      - "9002:9002"
     volumes:
       - ./product:/app
     networks:
@@ -40,7 +40,7 @@ services:
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
     ports:
-      - "9003:9001"
+      - "9003:9003"
     volumes:
       - ./comment:/app
     networks:

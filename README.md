@@ -149,3 +149,51 @@ docker compose up -d
 ```
 
 Abra `http://localhost:3080` e crie uma conta, já que o registro está aberto no compose. Escolha o endpoint Google e ative as ferramentas dos servidores `company`, `product` e `comment` na conversa. Feito isso, é só usar o chat e se divertir 😎👍.
+
+## 🧹 Remoção do ambiente
+
+Os módulos são removidos na ordem inversa da subida. A rede `unofficial-farma-network` é criada pelo compose dos serviços e só pode ser apagada quando nenhum container estiver conectado a ela, por isso os servidores MCP saem antes.
+
+Cada `docker compose down` remove os containers, os volumes nomeados (`-v`) e as imagens (`--rmi all`) do seu módulo. Os dados do PostgreSQL e do MongoDB são perdidos.
+
+### 1️⃣ Derrubar cliente
+
+```bash
+cd unofficial-farma-client
+docker compose down -v --rmi all --remove-orphans
+cd ..
+```
+
+O `-v` apaga o volume `mongodata`, onde ficam as contas e o histórico do chat. O `--rmi all` remove as imagens do LibreChat e do MongoDB.
+
+### 2️⃣ Derrubar servidores MCP
+
+```bash
+cd unofficial-farma-mcp-servers
+docker compose down --rmi all --remove-orphans
+cd ..
+```
+
+Este módulo não tem volume. Como a rede é externa aqui, ela continua existindo depois do comando, e isso é esperado.
+
+### 3️⃣ Derrubar serviços
+
+```bash
+cd unofficial-farma-services
+docker compose down -v --rmi all --remove-orphans
+cd ..
+```
+
+Agora sim a rede `unofficial-farma-network` sai, junto com o volume `pgdata` e as imagens dos serviços e do `postgres:16`. Se outro projeto seu usa essa mesma imagem do Postgres, troque `--rmi all` por `--rmi local`, que só remove as imagens construídas pelo compose.
+
+### 4️⃣ Conferir o que sobrou
+
+```bash
+docker ps -a --filter name=unofficial-farma
+docker volume ls --filter name=unofficial-farma
+docker network ls --filter name=unofficial-farma
+```
+
+As três listagens devem voltar vazias, só com o cabeçalho. Se aparecer algo, remova na mão com `docker rm -f`, `docker volume rm` ou `docker network rm`.
+
+O cache de build das imagens Python fica para trás. Dá para limpar com `docker builder prune`, mas esse comando vale para o Docker inteiro e não só para este projeto, então use sabendo disso. Por fim, o `unofficial-farma-client/.env` guarda sua chave do Gemini; apague o arquivo se não for mais usar o projeto.

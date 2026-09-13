@@ -88,11 +88,12 @@ Sistema operacional Linux, macOS ou Windows com WSL, além de Docker com o plugi
 
 As portas 3080, 5432, 8001-8003 e 9001-9003 precisam estar livres. Se alguma estiver ocupada, o compose falha na subida.
 
-### 2️⃣ Subir os serviços
+### 2️⃣ Subir serviços
 
 ```bash
 cd unofficial-farma-services
 docker compose up -d --build
+cd ..
 ```
 
 O comando cria a rede `unofficial-farma-network` e sobe o PostgreSQL junto com os serviços. O `init.sql` só roda quando o volume `pgdata` está vazio. Para repovoar o banco, apague o volume com `docker compose down -v`.
@@ -107,14 +108,15 @@ curl http://localhost:8003/health
 
 Todos devem responder `{"status":"ok","service":"..."}`.
 
-### 3️⃣ Subir os servidores MCP
+### 3️⃣ Subir servidores MCP
 
 ```bash
 cd unofficial-farma-mcp-servers
 docker compose up -d --build
+cd ..
 ```
 
-### 4️⃣ Preencher o `.env` do cliente
+### 4️⃣ Preencher `.env` do cliente
 
 O LibreChat lê as credenciais de `unofficial-farma-client/.env`. Copie o template `.env.example` e preencha o seu.
 
@@ -133,14 +135,14 @@ São cinco campos.
 | `CREDS_KEY`          | Chave de criptografia das credenciais salvas                      |
 | `CREDS_IV`           | Vetor de inicialização dessa criptografia                         |
 
-A chave sai do [Google AI Studio](https://aistudio.google.com/apikey). Os demais valores podem ser gerados com `openssl rand`:
+A chave deve ser obtida através do [Google AI Studio](https://aistudio.google.com/apikey). Os demais valores podem ser gerados com `openssl rand`:
 
 ```bash
 openssl rand -hex 32   # JWT_SECRET, JWT_REFRESH_SECRET e CREDS_KEY
 openssl rand -hex 16   # CREDS_IV
 ```
 
-### 5️⃣ Subir o cliente
+### 5️⃣ Subir cliente
 
 ```bash
 docker compose up -d

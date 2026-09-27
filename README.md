@@ -11,6 +11,11 @@ A ordem abaixo é também a ordem de subida. Os servidores MCP dependem da rede 
 ![PostgreSQL](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
+<div align="center">
+  <img src="./assets/services-architecture.png" alt="Arquitetura dos serviços" width="100%">
+  <p><sub>ARQUITETURA DOS SERVIÇOS</sub></p>
+</div>
+
 São três aplicações FastAPI independentes, cada uma no seu container e na sua porta, todas ligadas à mesma instância do PostgreSQL 16. O `init.sql` cria as tabelas e popula o banco na primeira vez que o volume sobe.
 
 | Serviço    | Porta | Responsabilidade                                         |
@@ -51,6 +56,11 @@ As rotas também são as mesmas nos três, mudando só o nome do recurso (`/comp
 ![MCP](https://img.shields.io/badge/mcp-%23000000.svg?style=for-the-badge&logo=modelcontextprotocol&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
+<div align="center">
+  <img src="./assets/mcp-servers-architecture.png" alt="Arquitetura dos servidores MCP" width="100%">
+  <p><sub>ARQUITETURA DOS SERVIDORES MCP</sub></p>
+</div>
+
 Cada servidor usa FastMCP com transporte `streamable-http`, escuta na sua própria porta e traduz chamadas de ferramenta em requisições HTTP para o serviço correspondente. Só as operações de leitura viraram ferramenta, então a IA consulta o catálogo sem poder alterá-lo.
 
 | Servidor   | Porta | Ferramentas                                                          |
@@ -77,6 +87,11 @@ O compose deste módulo declara a rede `unofficial-farma-network` como externa, 
 ![Gemini](https://img.shields.io/badge/gemini-%238E75B2.svg?style=for-the-badge&logo=googlegemini&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+
+<div align="center">
+  <img src="./assets/client-architecture.png" alt="Arquitetura do cliente" width="100%">
+  <p><sub>ARQUITETURA DO CLIENTE</sub></p>
+</div>
 
 O LibreChat sobe com um MongoDB só dele. No `librechat.yaml` ficam registrados os três servidores MCP, em `host.docker.internal`, nas portas 9001, 9002 e 9003. A interface fica acessível em `http://localhost:3080`.
 
@@ -152,48 +167,14 @@ Abra `http://localhost:3080` e crie uma conta, já que o registro está aberto n
 
 ## 🧹 Remoção do ambiente
 
-Os módulos são removidos na ordem inversa da subida. A rede `unofficial-farma-network` é criada pelo compose dos serviços e só pode ser apagada quando nenhum container estiver conectado a ela, por isso os servidores MCP saem antes.
-
-Cada `docker compose down` remove os containers, os volumes nomeados (`-v`) e as imagens (`--rmi all`) do seu módulo. Os dados do PostgreSQL e do MongoDB são perdidos.
-
-### 1️⃣ Derrubar cliente
+Da raiz do repositório, execute:
 
 ```bash
-cd unofficial-farma-client
-docker compose down -v --rmi all --remove-orphans
-cd ..
+docker compose -f unofficial-farma-client/docker-compose.yml down -v --rmi all
+docker compose -f unofficial-farma-mcp-servers/docker-compose.yml down -v --rmi all
+docker compose -f unofficial-farma-services/docker-compose.yml down -v --rmi all
 ```
 
-O `-v` apaga o volume `mongodata`, onde ficam as contas e o histórico do chat. O `--rmi all` remove as imagens do LibreChat e do MongoDB.
+A rede `unofficial-farma-network` pertence ao compose dos serviços, e o Docker não apaga uma rede que ainda tem container conectado, então os servidores MCP precisam sair antes, portanto, a ordem acima é importante.
 
-### 2️⃣ Derrubar servidores MCP
-
-```bash
-cd unofficial-farma-mcp-servers
-docker compose down --rmi all --remove-orphans
-cd ..
-```
-
-Este módulo não tem volume. Como a rede é externa aqui, ela continua existindo depois do comando, e isso é esperado.
-
-### 3️⃣ Derrubar serviços
-
-```bash
-cd unofficial-farma-services
-docker compose down -v --rmi all --remove-orphans
-cd ..
-```
-
-Agora sim a rede `unofficial-farma-network` sai, junto com o volume `pgdata` e as imagens dos serviços e do `postgres:16`. Se outro projeto seu usa essa mesma imagem do Postgres, troque `--rmi all` por `--rmi local`, que só remove as imagens construídas pelo compose.
-
-### 4️⃣ Conferir o que sobrou
-
-```bash
-docker ps -a --filter name=unofficial-farma
-docker volume ls --filter name=unofficial-farma
-docker network ls --filter name=unofficial-farma
-```
-
-As três listagens devem voltar vazias, só com o cabeçalho. Se aparecer algo, remova na mão com `docker rm -f`, `docker volume rm` ou `docker network rm`.
-
-O cache de build das imagens Python fica para trás. Dá para limpar com `docker builder prune`, mas esse comando vale para o Docker inteiro e não só para este projeto, então use sabendo disso. Por fim, o `unofficial-farma-client/.env` guarda sua chave do Gemini; apague o arquivo se não for mais usar o projeto.
+O `-v` apaga os volumes, e com eles o banco do PostgreSQL e as contas e conversas do LibreChat. O `--rmi all` remove também as imagens baixadas (`postgres:16`, `mongo` e LibreChat). Se outro projeto seu usa alguma delas, troque por `--rmi local`, que só apaga as imagens construídas aqui.
